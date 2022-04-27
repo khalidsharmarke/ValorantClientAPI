@@ -12,7 +12,7 @@ Built off the AIOHttp library's ClientSession module, which creates async HTTP C
 Currently supports the below features:
 
 1. Authentication / log in
-2. [View Valorant Store](#tutorial---view-valorant-store)
+2. [View Valorant Store](#tutorial---view-daily-valorant-store))
 
 ## Requirements and Installation
 
@@ -21,7 +21,14 @@ Currently supports the below features:
 3. Create + Activate a virtual environment
 4. run `pip install requirements.txt` inside your virtual environment
 
-## Tutorial - View Valorant Store
+## Tutorial - View Daily Valorant Store
+
+In order to view your Daily store:
+
+1. run `ValorantStore.py`
+2. Enter your username and password
+
+You'll then see you're store for the day along with what time it expires.
 
 Credit to RumbleMike for laying the foundation to this project -
 [Docs](https://github.com/RumbleMike/ValorantAPI/
