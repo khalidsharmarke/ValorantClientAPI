@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 import requests
 
 
-class ValorantClient(ClientSession):
+class ValorantClientSession(ClientSession):
     """
     Emulates Valorant PC Client 
     """
@@ -15,7 +15,7 @@ class ValorantClient(ClientSession):
         # Can be captured using Fiddler Capture
         self.riot_headers = {
             "User-Agent": "RiotClient/43.0.1.4195386.4190634 rso-auth (Windows; 10;;Professional, x64)",
-            "X-Riot-ClientVersion": ValorantClient.get_client_version(),
+            "X-Riot-ClientVersion": ValorantClientSession.get_client_version(),
             # X-Riot-ClientPlatform = base64 string to emulate the following:
             # {
             #     "platformType": "PC",
@@ -25,6 +25,8 @@ class ValorantClient(ClientSession):
             # } 
             "X-Riot-ClientPlatform": "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp"
         }
+
+        self.is_authenticated = None
 
     # Gets up-to-date version from 3rd party API
     @staticmethod
@@ -36,7 +38,7 @@ class ValorantClient(ClientSession):
             client_version = payload['data']['riotClientVersion']
 
         except Exception:
-            print('Unable to get most recent client version, defaulting')
+            print(f'Unable to get most recent client version, defaulting to client version: {client_version}')
         
         return client_version
 
@@ -52,14 +54,14 @@ class ValorantClient(ClientSession):
                 "redirect_uri":"https://playvalorant.com/opt_in",
                 "response_type":"token id_token"
             }
-            await super().post('https://auth.riotgames.com/api/v1/authorization', headers=self.riot_headers, json=data)
+            await self.post('https://auth.riotgames.com/api/v1/authorization', headers=self.riot_headers, json=data)
 
             data = {
                 'type': 'auth',
                 'username': username,
                 'password': password
             }
-            async with super().put('https://auth.riotgames.com/api/v1/authorization', headers=self.riot_headers ,json=data) as r:
+            async with self.put('https://auth.riotgames.com/api/v1/authorization', headers=self.riot_headers ,json=data) as r:
                 data = await r.json()
 
             pattern = re.compile('access_token=((?:[a-zA-Z]|\d|\.|-|_)*).*id_token=((?:[a-zA-Z]|\d|\.|-|_)*).*expires_in=(\d*)')
@@ -68,11 +70,11 @@ class ValorantClient(ClientSession):
 
             self.headers['Authorization'] = str.format(f'Bearer {access_token}')
 
-            async with super().post('https://auth.riotgames.com/userinfo', headers=self.riot_headers, json={}) as r:
+            async with self.post('https://auth.riotgames.com/userinfo', headers=self.riot_headers, json={}) as r:
                 data = await r.json()
             user_id = data['sub']
 
-            async with super().post('https://entitlements.auth.riotgames.com/api/token/v1', headers=self.riot_headers, json={}) as r:
+            async with self.post('https://entitlements.auth.riotgames.com/api/token/v1', headers=self.riot_headers, json={}) as r:
                 data = await r.json()
             entitlements_token = data['entitlements_token']
             self.headers['X-Riot-Entitlements-JWT'] = entitlements_token
@@ -81,7 +83,7 @@ class ValorantClient(ClientSession):
             self.user_id = user_id
 
         except Exception as e:
-            await super().close()
+            await self.close()
             raise SystemExit("Incorrect Username / Password")
             
         return self
@@ -89,7 +91,7 @@ class ValorantClient(ClientSession):
     # Get [Skin Names] from 3rd party -> transform to a map{uuid: skin name}
     # Normally would be in client's FileSystem 
     @staticmethod
-    async def get_map_of_skins():
+    def get_map_of_skins():
         map_of_all_skins = {}
         
         res = requests.get(f'https://valorant-api.com/v1/weapons/skins')
@@ -105,33 +107,26 @@ class ValorantClient(ClientSession):
     async def get_store(self):
         user_store = []
 
-        local_skins = await ValorantClient.get_map_of_skins()
+        local_skins = ValorantClientSession.get_map_of_skins()
 
         if self.is_authenticated is not True:
             self.authenticate()
 
         # Get [Skin IDs] from Riot Server
-        async with super().get(f'https://pd.na.a.pvp.net/store/v2/storefront/{self.user_id}', headers=self.riot_headers) as r:
+        async with self.get(f'https://pd.na.a.pvp.net/store/v2/storefront/{self.user_id}', headers=self.riot_headers) as r:
             data = await r.json()
             riot_store = data["SkinsPanelLayout"]["SingleItemOffers"]
             expires_in = data["SkinsPanelLayout"]["SingleItemOffersRemainingDurationInSeconds"]
         
-        # Correlate Riot IDs to local names 
+        # Correlate [Skin IDs] to local names 
         for skin_id in riot_store:
             skin_name = local_skins[skin_id]
             user_store.append(skin_name)
         
-        # get time where store refreshes
-        # check if time si correct against client, likely is UTC not local
+        # get time where store refreshes, in local time
         expires_at = time.time() + expires_in
-        formatted_expire_time = datetime.datetime.fromtimestamp(expires_at).strftime("%Y-%m-%d %I:%M:%S")
+        formatted_expire_time = datetime.datetime.fromtimestamp(expires_at).strftime("%M-%d-%Y %I:%M:%S")
 
         print(user_store, "\n")
         print(f'expires at: {formatted_expire_time}')
         return (user_store, formatted_expire_time)
-
-async def print_val_store():
-    client = ValorantClient()
-    await client.authenticate()
-    await client.get_store()
-    await client.close()

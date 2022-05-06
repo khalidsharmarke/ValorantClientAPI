@@ -1,5 +1,12 @@
 import asyncio
-from ValorantClient import print_val_store
+from ValorantClient import ValorantClientSession
+
+async def print_val_store():
+    client = ValorantClientSession()
+    await client.authenticate()
+    await client.get_store()
+    await client.close()
+
 
 
 if __name__ == '__main__':
