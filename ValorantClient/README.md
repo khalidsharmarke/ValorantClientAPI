@@ -23,6 +23,8 @@ Currently supports the below features:
 
 ## Tutorial - View Daily Valorant Store
 
+![alt text](./Example.png)
+
 In order to view your Daily store:
 
 1. run `ValorantStore.py`

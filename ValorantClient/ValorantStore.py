@@ -1,5 +1,5 @@
 import asyncio
-from ValorantClient import ValorantClientSession
+from ValorantClientSession import ValorantClientSession
 
 async def print_val_store():
     client = ValorantClientSession()
