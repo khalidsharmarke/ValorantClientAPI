@@ -5,7 +5,7 @@ so that we can view our account without having to directly be logged in at a PC.
 
 It takes an OOP approach to replication of the client, so that we can more easily build features in the future.
 
-## ValorantClient.py
+## ValorantClientSession.py
 
 Built off the AIOHttp library's ClientSession module, which creates async HTTP Client sessions.
 
@@ -30,7 +30,7 @@ In order to view your Daily store:
 1. run `ValorantStore.py`
 2. Enter your username and password
 
-You'll then see you're store for the day along with what time it expires.
+You'll then see your store for the day along with what time it expires.
 
 Credit to RumbleMike for laying the foundation to this project -
 [Docs](https://github.com/RumbleMike/ValorantAPI/)

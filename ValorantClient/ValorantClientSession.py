@@ -1,6 +1,7 @@
 import datetime
 import re
 import time
+
 from aiohttp import ClientSession
 import requests
 
@@ -124,9 +125,8 @@ class ValorantClientSession(ClientSession):
             user_store.append(skin_name)
         
         # get time where store refreshes, in local time
-        expires_at = time.time() + expires_in
-        formatted_expire_time = datetime.datetime.fromtimestamp(expires_at).strftime("%M-%d-%Y %I:%M:%S")
+        exp_date = datetime.datetime.now() + datetime.timedelta(seconds=expires_in)
 
         print(user_store, "\n")
-        print(f'expires at: {formatted_expire_time}')
-        return (user_store, formatted_expire_time)
+        print(f'expires at: {exp_date.strftime("%m-%d-%Y %I:%M:%S")} (Local Time Zone)')
+        return (user_store, exp_date)
